@@ -2,7 +2,24 @@
 
 A collection of reusable workflows and "on-demand" instructions for OpenCode and Claude Code. These skills help reduce context bloat by loading specific instructions only when the agent determines they are necessary.
 
-## 📂 Directory Structure
+## List of skills
+
+| Skill Name | Description |
+|------------|-------------|
+| pos-unit-tests | Planning, writing, running, and fixing platformOS unit tests using pos module tests |
+| code-review | Comprehensive code review for platformOS applications with focus on quality, security, and architecture compliance |
+| project-init | Initialize new platformOS project with modules |
+| pos-crud-generator | Generate CRUD resources and scaffolds using pos module core generators |
+| playwright-e2e | Implement fully functional e2e test suite for platformOS web application |
+| pos-auth | Protocols for implementing user authentication in platformOS using the pos module user |
+| pos-styling | Strict protocols for implementing consistent, professional UI using the platformOS pos module common-styling |
+| pos-auth-expansion | Expansion module for implementing roles, permissions, and authorization in platformOS |
+| playwright-cli | Automates browser interactions for web testing, form filling, screenshots, and data extraction |
+| pos-check | Run platformos-check linter with detailed error reporting |
+| pos-sync | Sync files to platformOS staging instance with automatic validation |
+| pos-logs | Fetch and analyze platformOS logs for errors and debugging |
+
+## 📂 How to use
 
 For these skills to be discovered automatically, place them in one of the following locations:
 
