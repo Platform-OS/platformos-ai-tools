@@ -10,11 +10,9 @@ A collection of reusable workflows and "on-demand" instructions for OpenCode and
 | code-review | Comprehensive code review for platformOS applications with focus on quality, security, and architecture compliance |
 | project-init | Initialize new platformOS project with modules |
 | pos-crud-generator | Generate CRUD resources and scaffolds using pos module core generators |
-| playwright-e2e | Implement fully functional e2e test suite for platformOS web application |
 | pos-auth | Protocols for implementing user authentication in platformOS using the pos module user |
 | pos-styling | Strict protocols for implementing consistent, professional UI using the platformOS pos module common-styling |
 | pos-auth-expansion | Expansion module for implementing roles, permissions, and authorization in platformOS |
-| playwright-cli | Automates browser interactions for web testing, form filling, screenshots, and data extraction |
 | pos-check | Run platformos-check linter with detailed error reporting |
 | pos-sync | Sync files to platformOS staging instance with automatic validation |
 | pos-logs | Fetch and analyze platformOS logs for errors and debugging |
@@ -50,30 +48,6 @@ For these skills to be discovered automatically, place them in one of the follow
     ├── SKILL.md          # Main instructions & frontmatter
     ├── scripts/          # Optional helper scripts
     └── templates/        # Optional reference files
-
-```
-
-## 🛠️ How to Create a Skill
-
-Each skill must be a folder containing a `SKILL.md` file. It starts with a YAML frontmatter block that tells the agent when to trigger the skill.
-
-### `SKILL.md` Template
-
-```markdown
----
-name: git-expert
-description: Guidelines for writing professional git commits and managing branches.
----
-
-# Git Expert Skill
-When this skill is active, you must follow these rules:
-1. Always use conventional commit prefixes (feat, fix, docs).
-2. Limit the first line to 50 characters.
-3. Use the imperative mood in the subject line.
-
-## Examples
-- `feat: add user authentication`
-- `fix: resolve memory leak in worker`
 
 ```
 
