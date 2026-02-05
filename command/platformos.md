@@ -17,10 +17,10 @@ If $ARGUMENTS contains `--update-skill`:
 2. Run the appropriate install command:
    ```bash
    # For local installation
-   curl -fsSL https://raw.githubusercontent.com/Platform-OS/platformos-ai-tools/refs/heads/master/install.sh | bash
+   curl -fsSL https://raw.githubusercontent.com/Platform-OS/platformos-ai-tools/master/install.sh | bash
 
    # For global installation
-   curl -fsSL https://raw.githubusercontent.com/Platform-OS/platformos-ai-tools/refs/heads/master/install.sh | bash -s -- --global
+   curl -fsSL https://raw.githubusercontent.com/Platform-OS/platformos-ai-tools/master/install.sh | bash -s -- --global
    ```
 
 3. Output success message and stop (do not continue to other steps).

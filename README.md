@@ -7,13 +7,13 @@ Comprehensive PlatformOS platform reference docs for AI/LLM consumption. Covers 
 Local installation (current project only):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Platform-OS/platformos-ai-tools/refs/heads/master/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Platform-OS/platformos-ai-tools/master/install.sh | bash
 ```
 
 Global installation (available in all projects):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Platform-OS/platformos-ai-tools/refs/heads/master/install.sh | bash -s -- --global
+curl -fsSL https://raw.githubusercontent.com/Platform-OS/platformos-ai-tools/master/install.sh | bash -s -- --global
 ```
 
 ## Usage

@@ -16,8 +16,8 @@ Options:
   -h, --help      Show this help message
 
 Examples:
-  curl -fsSL https://raw.githubusercontent.com/Platform-OS/platformos-ai-tools/refs/heads/master/install.sh | bash
-  curl -fsSL https://raw.githubusercontent.com/Platform-OS/platformos-ai-tools/refs/heads/master/install.sh | bash -s -- --global
+  curl -fsSL https://raw.githubusercontent.com/Platform-OS/platformos-ai-tools/master/install.sh | bash
+  curl -fsSL https://raw.githubusercontent.com/Platform-OS/platformos-ai-tools/master/install.sh | bash -s -- --global
 EOF
 }
 
