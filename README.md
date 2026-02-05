@@ -4,6 +4,8 @@ Comprehensive PlatformOS platform reference docs for AI/LLM consumption. Covers 
 
 ## Install
 
+### For OpenCode
+
 Local installation (current project only):
 
 ```bash
@@ -14,6 +16,20 @@ Global installation (available in all projects):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Platform-OS/platformos-ai-tools/master/install.sh | bash -s -- --global
+```
+
+### For Claude Code
+
+Local installation (current project only):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Platform-OS/platformos-ai-tools/master/claude-install.sh | bash
+```
+
+Global installation (available in all projects):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Platform-OS/platformos-ai-tools/master/claude-install.sh | bash -s -- --global
 ```
 
 ## Usage
