@@ -2,7 +2,7 @@
 
 Comprehensive PlatformOS platform reference docs for AI/LLM consumption. Covers Directory structure, Modules, Pages, pos-cli, Liquid, Graphql, etc.
 
-## Install
+## Install platformos skill
 
 ### For OpenCode
 
@@ -30,6 +30,38 @@ Global installation (available in all projects):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Platform-OS/platformos-ai-tools/master/claude-install.sh | bash -s -- --global
+```
+
+## Install Example Skills                                                                                                                                                                   
+               
+Example skills include: code-review, playwright-cli, pos-auth, pos-crud-generator, pos-unit-tests, project-init, and more.                                                                  
+                                                                                                                                                                                              
+### For OpenCode                                                                                                                                                                            
+                                  
+Local installation:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Platform-OS/platformos-ai-tools/master/install-examples.sh | bash -s -- --opencode
+```
+
+Global installation:
+
+```
+curl -fsSL https://raw.githubusercontent.com/Platform-OS/platformos-ai-tools/master/install-examples.sh | bash -s -- --opencode --global
+```
+  
+### For Claude Code
+
+Local installation:
+
+```
+curl -fsSL https://raw.githubusercontent.com/Platform-OS/platformos-ai-tools/master/install-examples.sh | bash -s -- --claude
+```
+  
+Global installation:
+
+```
+curl -fsSL https://raw.githubusercontent.com/Platform-OS/platformos-ai-tools/master/install-examples.sh | bash -s -- --claude --globa
 ```
 
 ## Usage
