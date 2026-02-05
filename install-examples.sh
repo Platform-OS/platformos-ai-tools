@@ -91,7 +91,7 @@ main() {
 
       cp -r "$skill_dir" "$dest_path"
       echo "  Installed: ${skill_name}"
-      ((count++))
+      count=$((count + 1))
     fi
   done
 
