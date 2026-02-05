@@ -23,9 +23,12 @@ mise use -g opencode                 # Any OS
 nix run nixpkgs#opencode             # or github:anomalyco/opencode for latest dev branch
 ```
 
-## Running Opencode
-```
-terminal: opencode
+## Running OpenCode
+
+Start the TUI from your terminal:
+
+```bash
+opencode
 ```
 
 ## Default Agents
