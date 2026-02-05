@@ -1,6 +1,6 @@
 # AI Tooling & Agent Infrastructure
 
-This repository centralizes shared AI tooling, agent configurations, automation workflows and knowledge hub used across the organization.
+This repository centralizes shared AI tooling, agent configurations, automation workflows and knowledge used across the organization.
 
 It acts as a common foundation for building, operating, and standardizing AI-assisted development practices.
 
