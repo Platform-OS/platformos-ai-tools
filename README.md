@@ -75,6 +75,8 @@ Configure in `opencode.json`
 }
 ```
 
+### To obtain CF-Access-Client-Id and CF-Access-Client-Secret tokens, please contact support@platformos.com
+
 ### Decision Trees
 
 - Rendering or UI request
