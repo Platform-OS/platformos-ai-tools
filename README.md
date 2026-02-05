@@ -104,7 +104,7 @@ Configure in `opencode.json`
   }
 }
 ```
-## READ MORE: [OpenCode Documentation]("https://opencode.ai/docs")
+## READ MORE: [OpenCode Documentation](https://opencode.ai/docs)
 ---
 # AI Agent Skills for OpenCode & Claude
 
