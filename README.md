@@ -1,6 +1,111 @@
-# 🚀 AI Agent Skills for OpenCode & Claude
+# AI Tooling & Agent Infrastructure
 
-A collection of reusable workflows and "on-demand" instructions for OpenCode and Claude Code. These skills help reduce context bloat by loading specific instructions only when the agent determines they are necessary.
+This repository centralizes shared AI tooling, agent configurations, automation workflows and knowledge hub used across the organization.
+
+It acts as a common foundation for building, operating, and standardizing AI-assisted development practices.
+
+# OpenCode
+
+## Installation
+
+```
+# YOLO
+curl -fsSL https://opencode.ai/install | bash
+
+# Package managers
+npm i -g opencode-ai@latest          # or bun/pnpm/yarn
+scoop install opencode               # Windows
+choco install opencode               # Windows
+brew install anomalyco/tap/opencode  # macOS and Linux (recommended, always up to date)
+brew install opencode                # macOS and Linux (official brew formula, updated less)
+paru -S opencode-bin                 # Arch Linux
+mise use -g opencode                 # Any OS
+nix run nixpkgs#opencode             # or github:anomalyco/opencode for latest dev branch
+```
+
+## Running Opencode
+```
+terminal: opencode
+```
+
+## Default Agents
+
+OpenCode includes two built-in agents you can switch between with the `Tab` key.
+
+    Build - Default, full-access agent for development work
+    Plan - Read-only agent for analysis and code exploration
+        Denies file edits by default
+        Asks permission before running bash commands
+        Ideal for exploring unfamiliar codebases or planning changes
+
+Also included is a general subagent for complex searches and multistep tasks. This is used internally and can be invoked using @general in messages.
+
+## Directory structure
+
+### Project scope
+```
+your-project/                         # cwd, from where `openncode` command is run
+├─ opencode.json			          # per project config overrides global
+└─.opencode/                          # Project-scoped OpenCode configuration (local overrides)
+   ├─ agents/                         # Custom Agents definitions (personas + behavior bundles)
+   │  ├─ reviewer.md                  # e.g., code review agent profile
+   │  └─ security.md                  # e.g., security auditing agent
+   │
+   ├─ commands/                       # Reusable command specs the agents can invoke
+   │  ├─ deploy.md                    # deployment workflow
+   │  └─ lint.md                      # static analysis / formatting
+   │
+   ├─ skills/                         # Modular capabilities/tools agents compose at runtime
+   │  ├─ liquid/                         
+   │  │   └─ SKILL.md                 # Documentation for liquid skill
+   │  └─ playwright/                    
+   │      └─ SKILL.md                 # Workflow to write e2e tests in playwright
+   │
+   ├─ plugins/                        # Extensions / third-party integrations
+   └─ tools/                          # External tool adapters
+```
+### Global scope
+As per project but all the fies including `opencode.json` in:
+```
+~/.config/opencode/
+```
+
+## MCP Server
+Configure in `opencode.json`
+
+```
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "docs": {
+      "type": "remote",
+      "url": "https://librarian.platformos.dev",
+      "headers": {
+        "CF-Access-Client-Id": "***",
+        "CF-Access-Client-Secret": "***"
+      },
+      "enabled": true
+    },
+    "chrome-devtools": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "chrome-devtools-mcp@latest",
+        "--channel=stable",
+        "--isolated=true",
+        "--viewport=1920x1080",
+        "--headless=true"
+      ]
+    }
+  }
+}
+```
+## READ MORE: [OpenCode Documentation]("https://opencode.ai/docs")
+---
+# AI Agent Skills for OpenCode & Claude
+
+This repository includes collection of reusable workflows and "on-demand" instructions for OpenCode and Claude Code. These skills help reduce context bloat by loading specific instructions only when the agent determines they are necessary.
 
 ## List of skills
 
@@ -17,7 +122,7 @@ A collection of reusable workflows and "on-demand" instructions for OpenCode and
 | pos-sync | Sync files to platformOS staging instance with automatic validation |
 | pos-logs | Fetch and analyze platformOS logs for errors and debugging |
 
-## 📂 How to use
+## How to use
 
 For these skills to be discovered automatically, place them in one of the following locations:
 
@@ -51,7 +156,7 @@ For these skills to be discovered automatically, place them in one of the follow
 
 ```
 
-## 🚀 Usage
+## Usage
 
 ### Automatic Discovery
 
@@ -60,15 +165,15 @@ Both Claude Code and OpenCode will scan your configured directories. When your p
 ### Manual Invocation
 
 * **Claude Code**: Use `/skill-name` (e.g., `/git-expert`) to force-load the instructions.
-* **OpenCode**: Use the `skill_use` tool or simply ask the agent to "load the git-expert skill."
+* **OpenCode**: Use the `/skill` command in prompt and select from listed skills or simply ask the agent to "load the git-expert skill."
 
-## 📜 Best Practices
+## Best Practices
 
 1. **Keep Descriptions Concise**: The description field is what the LLM uses to decide if the skill is relevant. Keep it under 200 characters.
 2. **Lazy Loading**: Use skills for heavy documentation (like API specs) instead of putting them in `CLAUDE.md` to save on token costs.
 3. **Versioning**: Include a version or license field in your frontmatter if sharing publicly.
 
-## ⚠️ Model Variability
+## Model Variability
 
 - Outcomes may vary by LLM. Because different models (e.g., Claude 3.5 Sonnet vs. GPT-4o vs. Llama 3) have different training biases and reasoning capabilities, the same skill definition may yield different results.
 
@@ -78,7 +183,7 @@ Both Claude Code and OpenCode will scan your configured directories. When your p
 
 Constraint Handling: Some models may ignore negative constraints (e.g., "don't do X") if the prompt is too long.
 
-## 🧠 Model Sensitivity & Reliability
+## Model Sensitivity & Reliability
 
 To ensure your skills work reliably across different environments, follow these reliability principles:
 
