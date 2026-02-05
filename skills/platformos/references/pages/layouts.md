@@ -1,0 +1,69 @@
+# Layouts
+
+**Layout** is a special kind of Liquid view that stores code that would normally repeat on a lot of pages, and is surrounding page content.
+
+Without the layout, every single page would need to share a lot of duplicated code. Changing anything would be very time consuming and error-prone.
+
+Using layouts, you can extract the common elements of many pages to one place. Usually, layout is the very first thing you want to develop.
+
+## Layouts directory
+
+All layouts should be located in the `views/layouts` directory. By default, all Pages use the layout called `application`, but you can create as many layouts as needed, and decide which page uses which layout. This is why the very first layout should be named `views/layouts/application.html.liquid`.
+
+## Minimal example
+
+At a minimum, the content of the layout should look like this:
+
+```liquid
+
+  {{ content_for_layout }}
+
+```
+
+This layout only renders the content of the page, and is equivalent of passing `layout: ''` in the page definition.
+
+## Usual example
+
+The most common use case of layouts is to place something before and after the content of the page:
+
+
+```html
+
+<!doctype html>
+<html lang="en">
+<head>
+  <!-- here come things like meta tags, favicon, css etc. -->
+</head>
+
+<body>
+  <header>here usually come header, navbar etc.</header>
+
+  <main>
+    {{ content_for_layout }}
+  </main>
+
+  <footer>
+    here usually come footer, js etc.
+  </footer>
+</body>
+</html>
+
+```
+
+### Layouts for different formats
+
+If you want to have layouts for your non-html pages, just put `.<format>` before the file extension, the same way as you would <a href="/developer-guide/pages/pages#formats" target="_blank">set a format for Pages</a>.
+
+Examples:
+
+* document.txt.liquid
+* document.csv.liquid
+* layout.xml.liquid
+* email.txt.liquid
+* email.html.liquid
+
+In the page `my-example-page.txt.liquid` you will put `layout: document` and it will recognize which layout to use (the same as the format of the page).
+
+### Rendering page content in layout
+
+The most important part in every layout file is the `{{ content_for_layout }}` line: it injects the content of the page into the layout.
