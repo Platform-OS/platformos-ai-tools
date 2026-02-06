@@ -69,10 +69,10 @@ Test your Stripe connection:
 ### Test vs Live Keys
 ```bash
 # Test mode (development)
-STRIPE_SK_KEY=sk_test_4eC39HqLyjWDarhtT657j3G2
+STRIPE_SK_KEY=sk_test_xxxxx
 
 # Live mode (production)
-STRIPE_SK_KEY=sk_live_4eC39HqLyjWDarhtT657j3G2
+STRIPE_SK_KEY=sk_live_xxxxx
 ```
 
 ## Webhook Configuration
