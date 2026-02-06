@@ -23,12 +23,28 @@ You **MUST execute every step exactly as written**, in order, without omission, 
 
 ## PROCESS (DO NOT ALTER)
 
+### Step 0: Retrieve POS Environment Information
+
+1. Find the project root
+The project root is determined by the presence of a `.pos` file in the current directory:
+
+```bash
+   PROJECT_ROOT=$(find "$(pwd)" -maxdepth 1 -name "*.pos" -type f | head -n 1 | xargs dirname)
+```
+
+2. List POS environments
+
+```bash
+pos-cli env list
+```
+
 ### Step 1: Project Initialization
 
 Initialize PlatformOS project structure:
 
+1. 
 ```bash
-cd <PROJECT_ROOT> && pos-cli init
+pos-cli init
 ```
 
 ---
@@ -116,7 +132,7 @@ Confirm **all** items below:
 ## FINAL ACTION (REQUIRED)
 
 EXECUTE IMMEDIATELY
-- Upon completion of the final action, Report completion of the Post-Init Checklist to **@pos-factory**.
+- Upon completion of the final action, Report completion of the Post-Init Checklist.
 - DO NOT generate additional output, suggestions, or confirmations.
 
 ## TERMINATION

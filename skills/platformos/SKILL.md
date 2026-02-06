@@ -1,9 +1,9 @@
 ---
-name: pos-meta-skill
-description: This skill equips an AI agent to reliably design, scaffold, configure, and operate applications on the **platformOS** platform. It standardizes how the agent reads documentation, models platform concepts, generates project structure, writes configuration, implements server logic, and performs deployments using platformOS conventions and tooling.
+name: platformos
+description: Consolidated skill for building on the platformOS platform. Use decision trees below to find the right component, then load detailed references.
 ---
 
-The skill emphasizes:
+## The skill leverages:
 - Correct use of platformOS file structure
 - Deterministic project scaffolding
 - Safe data modeling and migrations
@@ -11,523 +11,442 @@ The skill emphasizes:
 - Server-side logic (GraphQL, workflows, policies)
 - Repeatable deployment procedures
 - Minimal hallucination of unsupported features
----
-
-# platformOS – Quick Decision Trees (Reference Selection)
-
-These Quick Decision Trees are designed to deterministically map any developer request to the correct platformOS reference domain(s). They use ASCII tree visualizations for clarity and are exhaustive for all core tasks an agent would perform.
-
-The agent MUST consult these trees before generating any code.
 
 ---
 
-## Rendering or UI request
+# CRITICAL!
 
-```
-Rendering/UI request?
-├─ Full URL / navigable page → /reference/pages/*
-│  └─ Also render in Liquid → /reference/liquid/*
-├─ Shared UI snippet / reusable component → /reference/liquid/*
-├─ Styling / static resources → /reference/assets/*
-└─ Localized text → also /reference/translations/*
-```
+This skill defines a **strict, non-interpretable, sacred rules to help you avoid mistakes**.
+You **MUST follow guidance exactly as written**, without omission, substitution, optimization, or commentary.
 
----
+**Constraints**
+* Failure to follow constitutes NON-COMPLIANCE and VIOLATION.
 
-## Data persistence or schema request
 
-```
-Data persistence / schema?
-├─ Persistent data → /reference/models/*
-├─ User-submitted input with validation → also /reference/forms/*
-└─ Schema changes or migrations → /reference/models/*
+## 1. Source of Truth
+
+- References provided in this document is the ONLY source of truth
+- NEVER invent undocumented behaviors, APIs, configurations, Liquid tags/filters, or directory structures
+- The GraphQL schema is strict and closed; you CANNOT create custom GraphQL types
+- When uncertain, consult reference files
+
+## 2. Pre-Flight Validation (Required Before Every Change)
+
+- **After ANY file change, you MUST run the linter:**
+
+```bash
+platformos-check
 ```
 
+Must pass with 0 errors before deployment. 
+
+**NO OPTIONAL REVIEW**
+
+- [ ] NO underscore prefix in partial filenames
+- [ ] `render 'path/name'` resolves to `app/views/partials/path/name.liquid`
+- [ ] Pages have ONE HTTP method each
+- [ ] NO raw HTML/JS/CSS in pages (pages = controllers)
+- [ ] NO GraphQL calls from partials (pages only)
+- [ ] NO hardcoded user-facing text in partials (use translations)
+- [ ] NO hardcoded credentials (use `context.constants`)
+- [ ] `platformos-check` passes
+
+
+## 3. Quick Decision Trees
+
+These Quick Decision Trees are designed to deterministically map any developer request to the correct platformOS reference domain(s).
+They use ASCII tree visualizations for clarity and are exhaustive for all core tasks you would perform.
+You MUST fully understand requirements, consult these trees + indicated references and resolve all ambiguity before writing any code.
+
 ---
 
-##  Data retrieval or display request
+### "I need to build a page/endpoint"
 
 ```
-Data retrieval / display?
-├─ Read-only → /reference/graphql/* (queries)
-├─ Filtering / sorting / pagination → /reference/graphql/*
-└─ Rendered in HTML → also /reference/liquid/*
+Need a page or endpoint?
+├─ HTML page with data → pages/ + partials/ + graphql/
+├─ JSON API endpoint → pages/ (with .json.liquid extension)
+├─ JavaScript endpoint → pages/ (with .js.liquid extension)
+├─ Form submission handler → pages/ (method: post) + forms/
+├─ File download/redirect → pages/ + routing/
+├─ Admin-only page → pages/ + authentication/ (pos-module-user)
+├─ Layout wrapper → layouts/
+└─ Reusable UI component → partials/
 ```
 
----
-
-## Create / Update / Delete request
+### "I need to work with data"
 
 ```
-CRUD request?
-├─ Write operation → /reference/graphql/* (mutations)
-├─ User input involved → also /reference/forms/*
-├─ Permissions required → also /reference/policies/*
-└─ Post-write side effects / automation → also /reference/workflows/*
+Need data operations?
+├─ Define a data model/table → schema/
+├─ Query records (list/search/filter) → graphql/ (records query)
+├─ Query single record by ID → graphql/ (records query with id filter)
+├─ Create a record → graphql/ (record_create mutation) + commands/
+├─ Update a record → graphql/ (record_update mutation) + commands/
+├─ Delete a record → graphql/ (record_delete mutation) + commands/
+├─ Related records (belongs-to/has-many) → graphql/ (related_record/related_records)
+├─ Paginate results → graphql/ (page/per_page args)
+├─ Upload files → schema/ (upload type) + forms/
+├─ Seed/migrate data → migrations/
+├─ Bulk import/export → migrations/ or pos-cli data commands
+└─ Access existing Postgres/ES/Redis → graphql/ (all DB access via GraphQL only)
 ```
 
----
-
-## Automation or background behavior request
+### "I need business logic"
 
 ```
-Automation / background job?
-├─ Event-based / async → /reference/workflows/*
-├─ Scheduled / time-based → /reference/workflows/* (scheduled triggers)
-├─ External call required → also /reference/integrations/*
-└─ Reusable helper logic → also /reference/modules/*
+Need business logic?
+├─ Encapsulate a create/update/delete operation → commands/ (build → check → execute)
+├─ Validate user input → commands/ (check stage with core validators)
+├─ React to something that happened → events-consumers/
+├─ Run code asynchronously → background-jobs/
+├─ Run code on a schedule → background-jobs/ (with delay)
+├─ Send email after an action → events-consumers/ + emails-sms/
+├─ Process payments → modules/payments/
+└─ Wrap a data query for reuse → lib/queries/
 ```
 
----
-
-## Security or access control request
+### "I need authentication & authorization"
 
 ```
-Security / access control?
-├─ Route protection → /reference/policies/* (page policies)
-├─ Record ownership rules → /reference/policies/* (record policies)
-├─ Mutation restrictions → /reference/policies/* (mutation policies)
-└─ Authentication / identity context → /reference/policies/*
+Need auth?
+├─ Get current user → authentication/ (modules/user/queries/user/current)
+├─ Check if user can do something → authentication/ (modules/user/helpers/can_do)
+├─ Block unauthorized access (403) → authentication/ (can_do_or_unauthorized)
+├─ Redirect if not permitted → authentication/ (can_do_or_redirect)
+├─ Sign in a user → authentication/ (sign_in tag)
+├─ Define custom roles/permissions → authentication/ (override permissions.liquid)
+├─ OAuth2/social login → modules/user/
+├─ CSRF protection → forms/ (authenticity_token)
+├─ Spam protection (reCAPTCHA/hCaptcha) → forms/ (spam_protection tag)
+└─ NEVER use authorization_policies/ directly → always use pos-module-user
 ```
 
----
-
-## External system or integration request
+### "I need Liquid templating"
 
 ```
-External system / integration?
-├─ Inbound callback → /reference/integrations/* (webhooks)
-│   └─ Often paired with workflows → /reference/workflows/*
-├─ Outbound API call → /reference/integrations/* (HTTP requests)
-│   └─ Usually paired with workflows → /reference/workflows/*
-└─ Secrets / credentials → also /reference/environment/*
+Need Liquid help?
+├─ platformOS-specific tags → liquid/tags/
+│   ├─ Execute GraphQL → graphql tag
+│   ├─ Call partial as function → function tag
+│   ├─ Render a partial → render tag
+│   ├─ Parse JSON data → parse_json tag
+│   ├─ Redirect user → redirect_to tag
+│   ├─ Set session data → session tag
+│   ├─ Log for debugging → log tag
+│   ├─ Cache output → cache tag
+│   ├─ Run code in background → background tag
+│   ├─ Database transactions → transaction tag
+│   ├─ Error handling → try/catch tag
+│   ├─ Export variables → export tag
+│   ├─ Set response headers/status → response_headers/response_status tags
+│   ├─ Sign in user → sign_in tag
+│   └─ Spam protection → spam_protection tag
+├─ Filters (data transformation) → liquid/filters/
+│   ├─ Array operations → array_* filters
+│   ├─ Hash/object operations → hash_* filters
+│   ├─ Date/time operations → add_to_time, localize, strftime, to_time, etc.
+│   ├─ String operations → parameterize, slugify, titleize, humanize, etc.
+│   ├─ JSON/encoding → json, parse_json, base64_encode/decode, etc.
+│   ├─ Validation → is_email_valid, is_json_valid, matches, etc.
+│   ├─ Currency/pricing → pricify, pricify_cents, amount_to_fractional, etc.
+│   ├─ Cryptography → encrypt, decrypt, digest, compute_hmac, jwt_encode/decode
+│   ├─ Translation → t (translate), t_escape
+│   └─ Assets → asset_url, asset_path
+├─ Objects (global data) → liquid/objects/
+│   ├─ context.params → HTTP parameters
+│   ├─ context.session → session storage
+│   ├─ context.location → URL info
+│   ├─ context.current_user → user data (use module helper instead)
+│   ├─ context.constants → secrets/config
+│   ├─ context.environment → staging/production
+│   ├─ context.exports → exported partial variables
+│   ├─ context.headers → HTTP request headers
+│   └─ forloop/tablerowloop → iteration helpers
+├─ Types → liquid/types/
+├─ Variables (assign, capture, parse_json) → liquid/variables/
+├─ Flow control (if/elsif/else/unless/case) → liquid/flow-control/
+└─ Loops (for, cycle, tablerow) → liquid/loops/
 ```
 
----
-
-## Client-side interactivity request
+### "I need to handle forms"
 
 ```
-Client-side interactivity?
-├─ Simple behavior → /reference/assets/* (JavaScript)
-├─ Server interaction required → also /reference/graphql/*
-└─ Shared UI structure → also /reference/liquid/*
+Need forms?
+├─ HTML form with CSRF → forms/ (use <form> tag, NOT {% form %})
+├─ File upload → forms/ + modules/common-styling/ (upload component)
+├─ Form validation → commands/ (check stage)
+├─ Display validation errors → partials/ (render errors from command result)
+├─ Multi-step form → pages/ + sessions/
+├─ AJAX form submission → forms/ + pages/ (.json.liquid endpoint)
+└─ Spam protection → forms/ (spam_protection tag)
 ```
 
----
-
-## Shared logic or utilities request
+### "I need notifications"
 
 ```
-Shared logic / utilities?
-├─ Pure reusable logic → /reference/modules/*
-├─ Used inside workflows → also /reference/workflows/*
-└─ Used in forms / mutations → also /reference/forms/* or /reference/graphql/*
+Need notifications?
+├─ Send email → emails-sms/ (email templates)
+├─ Send SMS → emails-sms/ (SMS templates)
+├─ Flash messages/toasts → flash-messages/
+├─ Send async (after action) → events-consumers/ + emails-sms/
+└─ Email layout/styling → layouts/ (mailer layout)
 ```
 
----
-
-## Deployment or operational request
+### "I need styling & UI"
 
 ```
-Deployment / operational request?
-├─ Release / sync → /reference/cli/*
-├─ Environment variables / secrets → also /reference/environment/*
-└─ Runtime troubleshooting → /reference/cli/* (logs / status)
+Need UI/styling?
+├─ CSS framework → modules/common-styling/ (pos-* classes ONLY)
+├─ View available components → /style-guide on your instance
+├─ Layout structure → layouts/
+├─ Reusable UI snippets → partials/
+├─ Static assets (images, fonts, JS) → assets/
+├─ Pagination component → modules/common-styling/ (pagination partial)
+├─ File upload widget → modules/common-styling/ (upload partial)
+└─ NEVER use Tailwind/Bootstrap/custom frameworks
 ```
 
----
-
-## Localization or multi-language request
+### "I need to integrate external services"
 
 ```
-Localization / i18n?
-├─ Text / content → /reference/translations/*
-└─ Rendered in templates → also /reference/liquid/*
+Need integrations?
+├─ Call external REST API → api-calls/
+├─ Stripe payments → modules/payments/
+├─ OpenAI/AI features → modules/openai/
+├─ WebSocket/chat → modules/chat/
+├─ OAuth2 providers → modules/user/ (OAuth2 support)
+├─ Webhook receiver → pages/ (POST endpoint)
+└─ Store API keys/secrets → constants/
 ```
 
----
-
-## Cross-Mapping Matrix (Decision → References)
+### "I need deployment & DevOps"
 
 ```
-Page/UI → pages + liquid
-Component reuse → liquid
-Styling / static → assets
-Persisted data → models
-Read data → graphql
-Write data → graphql + policies
-Forms → forms + graphql
-Automation → workflows
-External integration → integrations + workflows
-Authorization → policies
-Shared helpers → modules
-Config / secrets → environment
-Deployment → cli
-Localization → translations + liquid
+Need deployment?
+├─ Deploy to environment → deployment/ (pos-cli deploy)
+├─ Watch logs → cli/ (pos-cli logs)
+├─ Run Liquid/GraphQL ad-hoc → cli/ (pos-cli exec)
+├─ Install modules → cli/ (pos-cli modules install)
+├─ Set environment constants → constants/ (pos-cli constants set)
+├─ Run migrations → migrations/
+├─ Run tests → testing/
+├─ Lint/validate code → cli/ (platformos-check)
+├─ Sync files in development → cli/ (pos-cli sync)
+└─ Environment configuration → configuration/
 ```
 
----
-
-## Mandatory Rule
-
-For every request:
-
-1. Run the relevant decision tree(s)
-2. Identify all referenced domains
-3. Consult those reference directories
-4. Only then generate code
-
-No primitive outside these references is allowed.
-
-
-# platformOS – Reference Index Catalog
-
-This document intentionally contains ONLY a structured reference catalog.
-
-It mirrors the Cloudflare skill’s "reference-first" approach: before generating any code, the agent must identify the correct domain and consult the corresponding reference set.
-
-No architecture, tutorials, or narrative guidance belong here — only deterministic mappings from task → platform primitive → documentation surface.
-
-The agent MUST treat these domains as the canonical source of truth and MUST NOT invent behavior outside them.
-
----
-
-# Master Domain Map (Top-Level Routing)
-
-Use this table first to classify the request.
-
-| If the user needs…            | Use this platformOS primitive | Consult this reference directory |
-| ----------------------------- | ----------------------------- | -------------------------------- |
-| A URL or page                 | Page + Layout                 | `/reference/pages/*`             |
-| Reusable UI piece             | Partial                       | `/reference/liquid/*`            |
-| HTML rendering logic          | Liquid                        | `/reference/liquid/*`            |
-| Static files (JS/CSS/images)  | Assets                        | `/reference/assets/*`            |
-| Persistent data               | Model                         | `/reference/models/*`            |
-| Data retrieval                | GraphQL Query                 | `/reference/graphql/*`           |
-| Data creation/update/delete   | GraphQL Mutation              | `/reference/graphql/*`           |
-| Validated user input          | Form                          | `/reference/forms/*`             |
-| Business rules/automation     | Workflow                      | `/reference/workflows/*`         |
-| Access control                | Policy                        | `/reference/policies/*`          |
-| Third‑party integration       | Webhook/HTTP/Workflow         | `/reference/integrations/*`      |
-| Environment config/secrets    | Environment variables         | `/reference/environment/*`       |
-| Deploy or manage environments | CLI                           | `/reference/cli/*`               |
-| Shared server helpers         | Lib modules                   | `/reference/modules/*`           |
-| Translations/i18n/date format | Translations                  | `/reference/translations/*`      |
-
-If more than one row applies, consult all corresponding references before implementation.
-
----
-
-# Liquid (Rendering Layer) Reference Index
-
-Reference path: `/reference/liquid/*`
-
-Scope: presentation only. No persistence or side effects.
-
-| Topic                      | Responsibility        | Typical Use             |
-| -------------------------- | --------------------- | ----------------------- |
-| Layouts                    | page wrappers         | headers/footers/shell   |
-| Pages                      | routable templates    | full views              |
-| Partials/includes          | reusable components   | cards/forms/snippets    |
-| Filters                    | formatting            | dates, numbers, strings |
-| Tags/control flow          | branching/loops       | display logic           |
-| Variables (assign/capture) | local state           | temporary values        |
-| Rendering GraphQL results  | template data binding | lists/details           |
-| Pagination helpers         | large lists           | cursor/limit rendering  |
-| Snippets/macros            | reuse                 | DRY templates           |
-| Asset linking              | JS/CSS                | script/style tags       |
-
-Rules:
-
-* No business logic
-* No writes/mutations
-* No authorization logic
-
----
-
-# Pages & Routing Reference Index
-
-Reference path: `/reference/pages/*`
-
-Scope: request → response mapping.
-
-| Topic          | Responsibility   | Typical Use            |
-| -------------- | ---------------- | ---------------------- |
-| Routes         | URL mapping      | `/posts`, `/dashboard` |
-| Page files     | main entry views | route targets          |
-| Layout binding | wrappers         | shared chrome          |
-| Meta/SEO       | head config      | titles/meta            |
-| Error pages    | 404/500          | fallback rendering     |
-| Redirects      | navigation rules | legacy URLs            |
-
-Rules:
-
-* One responsibility per route
-* Rendering only (no data mutation)
-
----
-
-# GraphQL Reference Index
-
-Reference path: `/reference/graphql/*`
-
-Scope: ALL server-side data access.
-
-| Topic             | Responsibility     | Typical Use           |
-| ----------------- | ------------------ | --------------------- |
-| Queries           | read-only fetch    | lists/details         |
-| Mutations         | writes             | create/update/delete  |
-| Variables         | dynamic input      | safe parameterization |
-| Fragments         | reuse fields       | DRY schemas           |
-| Filtering         | search             | user queries          |
-| Sorting           | ordering           | lists                 |
-| Pagination        | large datasets     | limit/cursor          |
-| Validation errors | safe handling      | forms                 |
-| Auth integration  | policy enforcement | secure fields         |
-| Batch operations  | efficiency         | bulk updates          |
-
-Rules:
-
-* No direct DB
-* No side effects in queries
-* Keep operations minimal
-
----
-
-# Models (Data Schema) Reference Index
-
-Reference path: `/reference/models/*`
-
-Scope: persistent structured data.
-
-| Topic             | Responsibility    | Typical Use               |
-| ----------------- | ----------------- | ------------------------- |
-| Field types       | schema definition | strings/numbers/relations |
-| Required fields   | integrity         | mandatory data            |
-| Defaults          | initial values    | deterministic records     |
-| Validations       | constraints       | formats/ranges            |
-| Relations         | associations      | one-to-many/many-to-many  |
-| Indexes           | performance       | frequent filters          |
-| Slugs/identifiers | routing           | SEO-friendly URLs         |
-| Soft delete       | lifecycle         | archiving                 |
-| Seeds             | initial content   | bootstrapping             |
-| Migrations        | schema changes    | evolution                 |
-
-Rules:
-
-* Define models before queries/mutations
-* Avoid untyped/free-form data unless necessary
-
----
-
-# Forms Reference Index
-
-Reference path: `/reference/forms/*`
-
-Scope: validated user submissions.
-
-| Topic              | Responsibility  | Typical Use         |
-| ------------------ | --------------- | ------------------- |
-| Field definitions  | input structure | forms               |
-| Validation rules   | correctness     | required/format     |
-| Sanitization       | safety          | user text           |
-| Submission mapping | mutation input  | data writes         |
-| Error handling     | UX              | validation messages |
-| CSRF protection    | security        | safe posts          |
-| File uploads       | attachments     | media               |
-
-Rules:
-
-* Always validate server-side
-* Forms must map to mutations
-
----
-
-# Workflows (Automation) Reference Index
-
-Reference path: `/reference/workflows/*`
-
-Scope: asynchronous or multi-step logic.
-
-| Topic              | Responsibility   | Typical Use          |
-| ------------------ | ---------------- | -------------------- |
-| Event triggers     | record lifecycle | create/update/delete |
-| Scheduled triggers | time-based       | cron tasks           |
-| Webhook triggers   | external events  | integrations         |
-| Steps              | logic units      | transforms/actions   |
-| Conditions         | branching        | rules                |
-| HTTP steps         | external APIs    | integrations         |
-| Retries            | reliability      | failures             |
-| Idempotency        | safety           | duplicate events     |
-| Logging            | debugging        | observability        |
-| Notifications      | emails/messages  | alerts               |
-
-Rules:
-
-* Prefer workflows for background logic
-* Keep idempotent
-
----
-
-# Policies (Authorization) Reference Index
-
-Reference path: `/reference/policies/*`
-
-Scope: security and access control.
-
-| Topic                  | Responsibility     | Typical Use         |
-| ---------------------- | ------------------ | ------------------- |
-| Page policies          | route protection   | auth-required pages |
-| Record policies        | row-level access   | ownership rules     |
-| Mutation policies      | write protection   | admin-only actions  |
-| Role definitions       | permission groups  | admin/editor/user   |
-| Guards                 | conditional checks | business rules      |
-| Field restrictions     | sensitive data     | PII control         |
-| Guest vs authenticated | visibility         | public/private      |
-
-Rules:
-
-* Enforce server-side only
-* Never rely on hidden UI
-
----
-
-# Integrations Reference Index
-
-Reference path: `/reference/integrations/*`
-
-Scope: external systems.
-
-| Topic                  | Responsibility | Typical Use        |
-| ---------------------- | -------------- | ------------------ |
-| Webhooks               | inbound events | Stripe/GitHub      |
-| HTTP requests          | outbound calls | REST APIs          |
-| Auth tokens            | credentials    | API keys/OAuth     |
-| Secrets storage        | protection     | env vars           |
-| Payload transforms     | mapping        | format conversion  |
-| Rate limiting          | safety         | API limits         |
-| Retry/backoff          | reliability    | network issues     |
-| Signature verification | security       | webhook validation |
-
-Rules:
-
-* Never hardcode secrets
-* Use workflows for network logic
-
----
-
-# Assets (Static/Client) Reference Index
-
-Reference path: `/reference/assets/*`
-
-Scope: client-side resources.
-
-| Topic                 | Responsibility | Typical Use        |
-| --------------------- | -------------- | ------------------ |
-| JavaScript            | interactivity  | UI behavior        |
-| CSS                   | styling        | layout/design      |
-| Images/fonts          | media          | static delivery    |
-| Bundling/minification | optimization   | performance        |
-| Caching               | speed          | headers/versioning |
-
-Rules:
-
-* No server logic
-* Keep lightweight
-
----
-
-# Modules / Lib Reference Index
-
-Reference path: `/reference/modules/*`
-
-Scope: shared reusable backend helpers.
-
-| Topic                 | Responsibility | Typical Use          |
-| --------------------- | -------------- | -------------------- |
-| Utility functions     | reuse          | formatting/helpers   |
-| Shared business logic | DRY code       | cross-workflow logic |
-| Validation helpers    | input rules    | forms/mutations      |
-| Service wrappers      | integrations   | API clients          |
-
-Rules:
-
-* Pure functions preferred
-* No hidden side effects
-
----
-
-# Environment & Configuration Reference Index
-
-Reference path: `/reference/environment/*`
-
-Scope: operational configuration.
-
-| Topic                  | Responsibility   | Typical Use     |
-| ---------------------- | ---------------- | --------------- |
-| Environment variables  | secrets/config   | keys/URLs       |
-| Environment separation | dev/staging/prod | isolation       |
-| Feature flags          | toggles          | gradual rollout |
-| Domain settings        | routing          | host config     |
-| Build settings         | optimization     | assets          |
-
-Rules:
-
-* Never commit secrets
-* Environment-specific behavior only here
-
----
-
-# CLI & Deployment Reference Index
-
-Reference path: `/reference/cli/*`
-
-Scope: operational control and releases.
-
-| Topic                  | Responsibility  | Typical Use    |
-| ---------------------- | --------------- | -------------- |
-| Deploy                 | publish changes | releases       |
-| Pull/sync              | local parity    | collaboration  |
-| Logs                   | debugging       | runtime issues |
-| Rollback               | recovery        | failures       |
-| Environment management | staging/prod    | lifecycle      |
-| Status checks          | health          | verification   |
-
-Rules:
-
-* All changes reproducible via CLI
-* No manual production edits
-
----
-
-# Translations (i18n) Reference Index
-
-Reference path: `/reference/translations/*`
-
-Scope: localization.
-
-| Topic                  | Responsibility   | Typical Use |
-| ---------------------- | ---------------- | ----------- |
-| Locale files           | language strings | UI copy     |
-| Variable interpolation | dynamic text     | templates   |
-| Fallbacks              | missing keys     | resilience  |
-| Pluralization          | grammar          | counts      |
-
-Rules:
-
-* No hardcoded user-facing text when localization is required
-
----
-
-# Reference Selection Rule (Mandatory)
-
-Before writing code:
-
-1. Identify the domain from the Master Domain Map
-2. Consult that reference directory
-3. Use only documented primitives from that domain
-4. Do not invent new constructs
-
-This catalog is exhaustive and defines the complete set of valid platformOS surfaces.
-
+### "I need performance optimization"
+
+```
+Need performance?
+├─ Cache page fragments → caching/ (cache tag)
+├─ Run heavy work in background → background-jobs/ (background tag)
+├─ Avoid N+1 queries → graphql/ (related_record/related_records)
+├─ Optimize pagination → graphql/ (per_page limits)
+├─ Static asset CDN → assets/ (asset_url filter)
+├─ Frontend optimization → assets/ (lazy loading, code splitting)
+└─ Database query optimization → graphql/ (filters, sorting)
+```
+
+## Categories Index
+
+Use the decision trees above to identify which category applies, then load the matching reference below. Each reference directory contains: `README.md`, `configuration.md`, `api.md`, `patterns.md`, `gotchas.md`, `advanced.md`.
+
+### Views & Routing
+| Category | Reference |
+|----------|-----------|
+| Pages | `references/pages/` |
+| Layouts | `references/layouts/` |
+| Partials | `references/partials/` |
+| Routing | `references/routing/` |
+
+### Data & Storage
+| Category | Reference |
+|----------|-----------|
+| Schema | `references/schema/` |
+| GraphQL | `references/graphql/` |
+| Migrations | `references/migrations/` |
+
+### Business Logic
+| Category | Reference |
+|----------|-----------|
+| Commands | `references/commands/` |
+| Events & Consumers | `references/events-consumers/` |
+| Background Jobs | `references/background-jobs/` |
+
+### Liquid Templating
+| Category | Reference |
+|----------|-----------|
+| Tags | `references/liquid/tags/` |
+| Filters | `references/liquid/filters/` |
+| Objects | `references/liquid/objects/` |
+| Types | `references/liquid/types/` |
+| Variables | `references/liquid/variables/` |
+| Flow Control | `references/liquid/flow-control/` |
+| Loops | `references/liquid/loops/` |
+
+### Authentication & Security
+| Category | Reference |
+|----------|-----------|
+| Authentication | `references/authentication/` |
+| Forms | `references/forms/` |
+
+### Notifications
+| Category | Reference |
+|----------|-----------|
+| Emails & SMS | `references/emails-sms/` |
+| Flash Messages | `references/flash-messages/` |
+
+### Modules
+| Category | Reference |
+|----------|-----------|
+| Core | `references/modules/core/` |
+| User | `references/modules/user/` |
+| Common Styling | `references/modules/common-styling/` |
+| Payments | `references/modules/payments/` |
+| Tests | `references/modules/tests/` |
+| Chat | `references/modules/chat/` |
+| OpenAI | `references/modules/openai/` |
+
+### Configuration & Infrastructure
+| Category | Reference |
+|----------|-----------|
+| Constants | `references/constants/` |
+| Configuration | `references/configuration/` |
+| Assets | `references/assets/` |
+| Translations | `references/translations/` |
+| Sessions | `references/sessions/` |
+| Caching | `references/caching/` |
+
+### External Integrations
+| Category | Reference |
+|----------|-----------|
+| API Calls | `references/api-calls/` |
+
+### Developer Tools
+| Category | Reference |
+|----------|-----------|
+| CLI | `references/cli/` |
+| Deployment | `references/deployment/` |
+| Testing | `references/testing/` |
+
+## Critical Architecture Rules
+
+### 1. Pages = Controllers (NEVER put HTML in pages)
+```
+Page files: fetch data via {% graphql %}, delegate to partials via {% render %}
+Partials: contain ALL HTML/JS/CSS presentation
+```
+→ `references/pages/`, `references/partials/`
+
+### 2. GraphQL in Pages Only
+```
+NEVER call {% graphql %} from partials
+Wrap GraphQL calls in query files at app/lib/queries/
+Call queries via {% function result = 'lib/queries/...' %}
+```
+→ `references/graphql/`
+
+### 3. Command Pattern (build → check → execute)
+```
+All create/update/delete operations go through Commands
+Commands use pos-module-core helpers for build, check, execute
+Validation errors are returned, not thrown
+```
+→ `references/commands/`
+
+### 4. Module System (READ-ONLY)
+```
+modules/ directory is READ-ONLY — never edit files there
+Override module behavior via documented override mechanism only
+Required: core, user, common-styling
+Optional: payments, payments_stripe, tests, chat, openai
+```
+→ `references/modules/`
+
+### 5. Liquid Coding Standards
+```
+Do NOT line-wrap statements within {% liquid %} blocks
+Keep each statement on a single line
+Variables in platformOS are LOCAL to the partial (use export tag to share)
+```
+→ `references/liquid/`
+
+## Project Structure
+
+```
+project-root/
+├── app/
+│   ├── assets/                    # Static files (images, fonts, styles, scripts)
+│   ├── views/
+│   │   ├── pages/                 # Controllers (NO HTML here)
+│   │   ├── layouts/               # Wrapper templates
+│   │   └── partials/              # Reusable template snippets (ALL HTML here)
+│   ├── lib/
+│   │   ├── commands/              # Business logic (build → check → execute)
+│   │   ├── queries/               # Data retrieval wrappers
+│   │   ├── events/                # Event definitions
+│   │   └── consumers/             # Event handlers
+│   ├── schema/                    # Database table definitions (YAML)
+│   ├── graphql/                   # GraphQL query/mutation files (.graphql)
+│   ├── emails/                    # Email templates
+│   ├── smses/                     # SMS templates
+│   ├── api_calls/                 # Third-party API integrations
+│   ├── translations/              # i18n content (YAML)
+│   ├── migrations/                # Data seeding and schema migrations
+│   ├── authorization_policies/    # DO NOT USE — use pos-module-user
+│   └── config.yml                 # Feature flags and configuration
+├── modules/                       # Downloaded/custom modules (READ-ONLY)
+├── .pos                           # Environment endpoints/project root sentinel file
+└── package.json                   # (optional) Node.js dependencies
+```
+
+## File Extension Conventions
+
+| Extension | Content-Type | URL |
+|-----------|--------------|-----|
+| `*.liquid` or `*.html.liquid` | `text/html` | `/path` |
+| `*.json.liquid` | `application/json` | `/path.json` |
+| `*.js.liquid` | `application/javascript` | `/path.js` |
+
+## REST CRUD Convention
+
+| Method | Page File | GraphQL Operation |
+|--------|-----------|-------------------|
+| GET | index, show, new, edit | records (search/find) |
+| POST | create | record_create |
+| PUT | update | record_update |
+| DELETE | delete | record_delete |
+
+## Forbidden Behaviors
+
+- Editing files in `./modules/` (read-only)
+- Breaking long lines in `{% liquid %}` blocks (causes syntax errors)
+- Inventing Liquid tags, filters, or GraphQL types not in the platform
+- Using `{% form %}` tag for HTML forms (use plain `<form>` with CSRF token)
+- Bypassing security (CSRF tokens, authorization)
+- Direct database access outside GraphQL
+- Deploying without running `platformos-check`
+- Syncing files outside `./app/`
+- Using `context.current_user` directly (use pos-module-user)
+- Using `authorization_policies/` directly (use pos-module-user)
+- Using Tailwind, Bootstrap, or custom CSS frameworks (use common-styling)
+- Hardcoding user-facing text (use translations)
+- Hardcoding API keys or secrets (use `context.constants`)
+
+## Documentation Links
+
+| Resource | URL |
+|----------|-----|
+| Official Docs | https://documentation.platformos.com |
+| GraphQL Schema | https://documentation.platformos.com/api/graphql/schema |
+| Liquid Filters | https://documentation.platformos.com/api-reference/liquid/platformos-filters |
+| Liquid Tags | https://documentation.platformos.com/api-reference/liquid/platformos-tags |
+| Liquid Objects | https://documentation.platformos.com/api-reference/liquid/platformos-objects |
+| Core Module | https://github.com/Platform-OS/pos-module-core |
+| User Module | https://github.com/Platform-OS/pos-module-user |
+| Common Styling | https://github.com/Platform-OS/pos-module-common-styling |
+| Payments Module | https://github.com/Platform-OS/pos-module-payments |
+| Payments Stripe | https://github.com/Platform-OS/pos-module-payments-stripe |
+| Tests Module | https://github.com/Platform-OS/pos-module-tests |
