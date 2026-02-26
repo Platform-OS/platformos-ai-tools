@@ -1,0 +1,8 @@
+{
+  "name": "platformos-tools",
+  "version": "1.0.0",
+  "description": "platformOS tools for Claude Code — auto-diagnostics after every Liquid/GraphQL edit, hover, completions, definitions, references, and dead-code detection via agent-callable tools.",
+  "author": {
+    "name": "Platform-OS"
+  }
+}

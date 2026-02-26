@@ -1,33 +1,16 @@
-/**
- * platformOS LSP Plugin for OpenCode
- *
- * Integrates the platformOS Language Server (pos-cli lsp) into OpenCode
- * agent sessions. Provides:
- *
- *  - `platformos_diagnostics` tool  — runs pos-cli check on .liquid/.graphql files
- *  - `platformos_hover` tool        — gets LSP hover docs at a given position
- *  - `tool.execute.after` hook      — auto-surfaces diagnostics after file edits
- *  - System prompt context          — tells the agent about the available tools
- *
- * Installation: symlink or copy to ~/.config/opencode/plugins/platformos-lsp.js
- */
-
 import { tool } from "@opencode-ai/plugin";
 import { spawn, execFile } from "node:child_process";
 import { appendFile, readFile, realpath } from "node:fs/promises";
-
-// ─── Minimal JSON-RPC LSP client ──────────────────────────────────────────────
 
 class PlatformOSLSPClient {
   #proc = null;
   #buf = "";
   #reqId = 0;
-  #pending = new Map(); // id → { resolve, reject }
-  #diagnostics = new Map(); // uri → Diagnostic[]
-  #openDocs = new Map(); // uri → version number
+  #pending = new Map();
+  #diagnostics = new Map();
+  #openDocs = new Map();
   initialized = false;
 
-  /** Spawn the LSP server and start reading its stdout. */
   start(cmd = "pos-cli", args = ["lsp"]) {
     this.#proc = spawn(cmd, args, { stdio: ["pipe", "pipe", "pipe"], env: process.env });
 
@@ -37,7 +20,6 @@ class PlatformOSLSPClient {
     });
 
     this.#proc.on("error", (err) => {
-      // Reject all pending requests immediately (e.g. command not found)
       for (const cb of this.#pending.values()) cb.reject(err);
       this.#pending.clear();
       this.initialized = false;
@@ -50,7 +32,6 @@ class PlatformOSLSPClient {
     return this;
   }
 
-  /** Parse LSP frames from the receive buffer. */
   #drain() {
     while (true) {
       const sep = this.#buf.indexOf("\r\n\r\n");
@@ -67,17 +48,15 @@ class PlatformOSLSPClient {
       const body = this.#buf.slice(bodyStart, bodyStart + len);
       this.#buf = this.#buf.slice(bodyStart + len);
 
-      try { this.#handle(JSON.parse(body)); } catch { /* ignore parse errors */ }
+      try { this.#handle(JSON.parse(body)); } catch {}
     }
   }
 
   #handle(msg) {
-    // Push notification: cache diagnostics
     if (msg.method === "textDocument/publishDiagnostics") {
       this.#diagnostics.set(msg.params.uri, msg.params.diagnostics ?? []);
       return;
     }
-    // Response to a pending request
     if (msg.id != null) {
       const cb = this.#pending.get(msg.id);
       if (cb) {
@@ -87,7 +66,6 @@ class PlatformOSLSPClient {
     }
   }
 
-  /** Write a framed JSON-RPC message to the server's stdin. */
   #send(msg) {
     if (!this.#proc?.stdin?.writable) return;
     const body = JSON.stringify(msg);
@@ -96,7 +74,6 @@ class PlatformOSLSPClient {
     );
   }
 
-  /** Send a request and await the response (with timeout). */
   #req(method, params, ms = 8_000) {
     return new Promise((resolve, reject) => {
       const id = ++this.#reqId;
@@ -109,18 +86,16 @@ class PlatformOSLSPClient {
     });
   }
 
-  /** Send a one-way notification. */
   #notify(method, params) {
     this.#send({ jsonrpc: "2.0", method, params });
   }
 
-  /** Perform the LSP initialize handshake. */
   async initialize(rootUri) {
     await this.#req(
       "initialize",
       {
         processId: process.pid,
-        clientInfo: { name: "opencode-platformos-plugin", version: "1.0.0" },
+        clientInfo: { name: "opencode-platformos-tools", version: "1.0.0" },
         rootUri,
         capabilities: {
           textDocument: {
@@ -132,16 +107,12 @@ class PlatformOSLSPClient {
         },
         workspaceFolders: [{ uri: rootUri, name: "workspace" }],
       },
-      15_000 // longer timeout for first init
+      15_000
     );
     this.#notify("initialized", {});
     this.initialized = true;
   }
 
-  /**
-   * Open or update a document in the LSP.
-   * Uses didOpen on first call, didChange on subsequent calls.
-   */
   syncDoc(uri, text) {
     const langId = uri.endsWith(".graphql") ? "graphql" : "liquid";
     const prev = this.#openDocs.get(uri);
@@ -160,12 +131,10 @@ class PlatformOSLSPClient {
     }
   }
 
-  /** Return cached diagnostics for a URI (empty array if none yet). */
   diags(uri) {
     return this.#diagnostics.get(uri) ?? [];
   }
 
-  /** Request hover information at a position. */
   hover(uri, line, character) {
     return this.#req("textDocument/hover", {
       textDocument: { uri },
@@ -173,7 +142,6 @@ class PlatformOSLSPClient {
     }, 30_000);
   }
 
-  /** Request completions at a position. */
   completions(uri, line, character) {
     return this.#req("textDocument/completion", {
       textDocument: { uri },
@@ -181,7 +149,6 @@ class PlatformOSLSPClient {
     }, 30_000);
   }
 
-  /** Request go-to-definition at a position. */
   definition(uri, line, character) {
     return this.#req("textDocument/definition", {
       textDocument: { uri },
@@ -189,32 +156,26 @@ class PlatformOSLSPClient {
     }, 30_000);
   }
 
-  /** Find all files that reference the given URI. */
   references(uri, includeIndirect = false) {
     return this.#req("themeGraph/references", { uri, includeIndirect }, 30_000);
   }
 
-  /** Find all files that the given URI depends on. */
   dependencies(uri, includeIndirect = false) {
     return this.#req("themeGraph/dependencies", { uri, includeIndirect }, 30_000);
   }
 
-  /** Find all files in the project that are never referenced (dead code). */
   deadCode(uri) {
     return this.#req("themeGraph/deadCode", { uri }, 30_000);
   }
 
-  /** Gracefully stop the LSP server. */
   stop() {
     try {
       this.#notify("shutdown", null);
       this.#notify("exit", null);
-    } catch { /* ignore */ }
+    } catch {}
     this.#proc?.kill();
   }
 }
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const isWatched = (p) => p.endsWith(".liquid") || p.endsWith(".graphql");
 
@@ -222,17 +183,9 @@ const toUri = (p) => (p.startsWith("file://") ? p : `file://${p}`);
 
 const toAbs = (dir, p) => (p.startsWith("/") ? p : `${dir}/${p}`);
 
-/**
- * Format the JSON output of `pos-cli check run -f json`.
- * When filterFile is given (absolute path), only offenses for that file
- * are included. Returns null if there are no matching offenses, otherwise
- * returns { text, errors, warnings, infos }.
- */
 function formatCheckResult(json, filterFile = null) {
   if (!json?.files?.length) return null;
 
-  // pos-cli check run -f json uses string severity ("error"/"warning"/"info")
-  // and flat start_row/start_column fields (not nested start.line/start.character).
   const normSev = (s) => {
     if (s === "error"   || s === 2) return "error";
     if (s === "warning" || s === 1) return "warning";
@@ -244,7 +197,6 @@ function formatCheckResult(json, filterFile = null) {
   let errors = 0, warnings = 0, infos = 0;
 
   for (const file of json.files) {
-    // file.path may be absolute or relative; match by suffix
     if (filterFile && !filterFile.endsWith(file.path) && file.path !== filterFile) continue;
 
     for (const o of file.offenses ?? []) {
@@ -279,7 +231,6 @@ function formatCheckResult(json, filterFile = null) {
   };
 }
 
-/** Format a CompletionItem list into a concise string for the agent. */
 function formatCompletions(result) {
   if (!result) return null;
   const items = Array.isArray(result) ? result : (result.items ?? []);
@@ -299,7 +250,6 @@ function formatCompletions(result) {
   return `Completions (${items.length}):\n${lines.join("\n")}${more}`;
 }
 
-/** Format definition links into file paths for the agent. */
 function formatDefinitions(result) {
   if (!result?.length) return null;
   const lines = result.map((loc) => {
@@ -311,7 +261,6 @@ function formatDefinitions(result) {
   return `Definition(s):\n${lines.join("\n")}`;
 }
 
-/** Format AugmentedReference[] into a readable list. */
 function formatReferences(refs, label) {
   if (!refs?.length) return `No ${label} found.`;
   const lines = refs.map((ref) => {
@@ -323,7 +272,6 @@ function formatReferences(refs, label) {
   return `${label} (${refs.length}):\n${lines.join("\n")}`;
 }
 
-/** Extract a plain-text string from an LSP hover result. */
 function extractHoverText(result) {
   if (!result?.contents) return null;
   const c = result.contents;
@@ -333,17 +281,7 @@ function extractHoverText(result) {
   return c.value ?? null;
 }
 
-// ─── Plugin export ────────────────────────────────────────────────────────────
-
 export const PlatformOSLSPPlugin = async ({ directory, $, client }) => {
-  // pos-cli is a JS file (`#!/usr/bin/env node`). Spawning it directly via
-  // child_process can fail because the shebang relies on `env node` finding
-  // the right Node in PATH — which may be stripped in Bun's subprocess env.
-  //
-  // BunShell ($) inherits the user's full PATH (including NVM/fnm/volta shims),
-  // so we use it to resolve both binaries to absolute paths, then spawn
-  // `node <pos-cli.js> lsp` directly — no shebang lookup needed, works with
-  // any npm install layout (NVM, fnm, Volta, Homebrew, system npm, etc.).
   const [posCliBin, nodeBin] = await Promise.all([
     $`which pos-cli`.quiet().nothrow().text().then((p) => p.trim()).catch(() => ""),
     $`which node`.quiet().nothrow().text().then((p) => p.trim()).catch(() => ""),
@@ -361,12 +299,10 @@ export const PlatformOSLSPPlugin = async ({ directory, $, client }) => {
       lspArgs = [realPosCliPath, "lsp"];
       checkCmd = nodeBin;
       checkArgs = [realPosCliPath, "check", "run", "-f", "json"];
-    } catch {
-      // fall back to invoking pos-cli by name
-    }
+    } catch {}
   }
 
-  const logFile = `${directory}/platformos-lsp.log`;
+  const logFile = `${directory}/platformos-tools.log`;
   function log(msg) {
     const ts = new Date().toISOString();
     appendFile(logFile, `[${ts}] ${msg}\n`).catch(() => {});
@@ -377,7 +313,6 @@ export const PlatformOSLSPPlugin = async ({ directory, $, client }) => {
   const lsp = new PlatformOSLSPClient().start(lspCmd, lspArgs);
   const rootUri = toUri(directory);
 
-  // Initialize asynchronously; don't block plugin load.
   const ready = lsp
     .initialize(rootUri)
     .then(() => log("LSP initialized OK"))
@@ -386,7 +321,6 @@ export const PlatformOSLSPPlugin = async ({ directory, $, client }) => {
       console.error("[platformOS] LSP init failed:", e.message);
     });
 
-  // ── Run pos-cli check on the project directory, filter to one file ─────────────
   function runCheck(filterFile = null) {
     log(`runCheck: ${filterFile ?? "all files"}`);
     return new Promise((resolve) => {
@@ -414,7 +348,6 @@ export const PlatformOSLSPPlugin = async ({ directory, $, client }) => {
     });
   }
 
-  // ── Sync a file to the private LSP (for hover) ──────────────────────────────
   async function syncToLSP(absPath) {
     await ready;
     if (!lsp.initialized) return;
@@ -427,19 +360,12 @@ export const PlatformOSLSPPlugin = async ({ directory, $, client }) => {
   }
 
   return {
-    // ── Custom tools ──────────────────────────────────────────────────────────
-
     tool: {
-      /**
-       * platformos_diagnostics
-       * Runs pos-cli check on a .liquid or .graphql file and returns
-       * all errors, warnings, and info messages.
-       */
       platformos_diagnostics: tool({
         description:
-          "Diagnostics are automatically appended after Read/Write/Edit tool calls." +
+          "Diagnostics are automatically appended after Read/Write/Edit tool calls. " +
           "You can also run platformOS pos-cli check (linter/validator) on a Liquid or GraphQL file on demand " +
-          "and return all errors, warnings, and info diagnostics."
+          "and return all errors, warnings, and info diagnostics.",
         args: {
           file_path: tool.schema
             .string()
@@ -460,12 +386,6 @@ export const PlatformOSLSPPlugin = async ({ directory, $, client }) => {
         },
       }),
 
-      /**
-       * platformos_hover
-       * Queries the platformOS LSP for hover documentation at a specific
-       * position in a Liquid file — useful for understanding unfamiliar tags,
-       * filters, and objects.
-       */
       platformos_hover: tool({
         description:
           "Get platformOS LSP hover documentation for a Liquid tag, filter, or object " +
@@ -504,7 +424,6 @@ export const PlatformOSLSPPlugin = async ({ directory, $, client }) => {
           const absPath = toAbs(ctx.directory, file_path);
           await syncToLSP(absPath);
 
-          // Brief pause so the LSP can parse the freshly synced document.
           await new Promise((r) => setTimeout(r, 1500));
 
           try {
@@ -647,7 +566,6 @@ export const PlatformOSLSPPlugin = async ({ directory, $, client }) => {
           log("tool: dead_code");
           await ready;
           if (!lsp.initialized) return "platformOS LSP is not ready yet.";
-          // Any project file URI works — the server finds the root from it
           const anyUri = toUri(ctx.directory);
           try {
             const result = await lsp.deadCode(anyUri);
@@ -663,10 +581,7 @@ export const PlatformOSLSPPlugin = async ({ directory, $, client }) => {
       }),
     },
 
-    // ── Auto-surface diagnostics after file edits ──────────────────────────────
-
     "tool.execute.after": async (input, output) => {
-      // Tool names used by the OpenCode agent for file operations.
       const FILE_TOOLS = new Set([
         "write", "edit", "multiedit", "patch",
         "Write", "Edit", "MultiEdit",
@@ -675,7 +590,6 @@ export const PlatformOSLSPPlugin = async ({ directory, $, client }) => {
 
       if (!FILE_TOOLS.has(input.tool)) return;
 
-      // The file path may live under different arg keys depending on the tool.
       const filePath =
         input.args?.file_path ??
         input.args?.path ??
@@ -693,7 +607,6 @@ export const PlatformOSLSPPlugin = async ({ directory, $, client }) => {
         log(`auto-diagnostics:\n${diagnostics.text}`);
         output.output = `${output.output}\n\n---\n${diagnostics.text}`;
 
-        // Show a toast in the TUI for errors or warnings
         if (diagnostics.errors > 0 || diagnostics.warnings > 0) {
           const hasErrors = diagnostics.errors > 0;
           const parts = [
@@ -714,8 +627,6 @@ export const PlatformOSLSPPlugin = async ({ directory, $, client }) => {
         log(`auto-diagnostics: no issues`);
       }
     },
-
-    // ── Inject platformOS LSP awareness into the system prompt ─────────────────
 
     "experimental.chat.system.transform": async (_input, output) => {
       output.system.push(
@@ -773,10 +684,7 @@ export const PlatformOSLSPPlugin = async ({ directory, $, client }) => {
       );
     },
 
-    // ── Handle OpenCode events ─────────────────────────────────────────────────
-
     event: async ({ event }) => {
-      // Shut down our private LSP when the session ends.
       if (event.type === "session.deleted") {
         log("session deleted — stopping LSP");
         lsp.stop();

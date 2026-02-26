@@ -3,7 +3,7 @@
     "pos-cli": {
       "command": "pos-cli-mcp"
     },
-    "platformos-lsp": {
+    "platformos-tools": {
       "command": "node",
       "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/lsp-mcp-server.js"]
     }

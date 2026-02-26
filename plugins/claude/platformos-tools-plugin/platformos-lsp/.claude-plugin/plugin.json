@@ -1,8 +1,0 @@
-{
-  "name": "platformos-lsp",
-  "version": "1.0.0",
-  "description": "platformOS Language Server integration for Claude Code. Auto-runs pos-cli check after every Liquid/GraphQL edit and provides hover, completions, definitions, references, and dead-code analysis via agent-callable tools.",
-  "author": {
-    "name": "platformOS"
-  }
-}

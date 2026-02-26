@@ -1,35 +1,29 @@
-# claude-pos-plugin
+# platformos-tools — Claude Code Plugin
 
-Claude Code plugin marketplace for platformOS development tools.
-
-## Plugins
-
-| Plugin | Description |
-|--------|-------------|
-| [platformos-lsp](./platformos-lsp) | platformOS Language Server — auto-diagnostics, hover, completions, definitions, references, and dead-code detection for `.liquid` and `.graphql` files |
+Claude Code plugin providing platformOS Language Server integration for `.liquid` and `.graphql` files.
 
 ## Installation
 
-**1. Add this marketplace to Claude Code:**
+**Step 1** — Add the marketplace registry (one-time, per machine):
 
-```bash
-claude plugin marketplace add <your-github-username>/claude-pos-plugin
+```sh
+claude plugin marketplace add Platform-OS/platformos-ai-tools
 ```
 
-**2. Install the plugin:**
+**Step 2** — Install the plugin:
 
-```bash
-claude plugin install platformos-lsp@claude-pos-plugin
+```sh
+claude plugin install platformos-tools@platformos-ai-tools
 ```
 
-**3. Prerequisites** — install [pos-cli](https://github.com/Platform-OS/pos-cli) globally:
+## Prerequisites
 
-```bash
-npm install -g @platformos/pos-cli
+`pos-cli` v6.0.0-beta.10 or later (includes `pos-cli-lsp` and `pos-cli-mcp`):
+
+```sh
+npm install -g @platformos/pos-cli@6.0.0-beta.10
 ```
 
-## Usage
+## Contents
 
-Start Claude Code from the root of a platformOS project. The plugin activates automatically — diagnostics run after every file edit, and LSP tools are available for the agent to call.
-
-See the [platformos-lsp README](./platformos-lsp/README.md) for full documentation.
+- [`platformos-tools/`](platformos-tools/) — Plugin source (installed by `claude plugin install`)

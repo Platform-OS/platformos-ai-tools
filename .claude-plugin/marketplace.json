@@ -1,0 +1,13 @@
+{
+  "name": "platformos-ai-tools",
+  "owner": {
+    "name": "Platform-OS"
+  },
+  "plugins": [
+    {
+      "name": "platformos-tools",
+      "source": "./plugins/claude/platformos-tools-plugin/platformos-tools",
+      "description": "platformOS tools for Claude Code — auto-diagnostics after every Liquid/GraphQL edit, hover, completions, definitions, references, and dead-code detection via agent-callable tools."
+    }
+  ]
+}
