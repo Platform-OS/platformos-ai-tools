@@ -3,7 +3,7 @@ set -euo pipefail
 
 PLUGIN_NAME="platformos-tools"
 PLUGIN_FILE="plugin.js"
-GITHUB_RAW="https://raw.githubusercontent.com/Platform-OS/platformos-ai-tools/master/plugins/opencode/platformos-tools-plugin/plugin.js"
+GITHUB_RAW="https://raw.githubusercontent.com/Platform-OS/platformos-ai-tools/refs/heads/master/plugins/opencode/platformos-tools-plugin/plugin.js"
 OPENCODE_DIR="${HOME}/.config/opencode"
 PLUGINS_DIR="${OPENCODE_DIR}/plugins"
 CONFIG_FILE="${OPENCODE_DIR}/opencode.json"
