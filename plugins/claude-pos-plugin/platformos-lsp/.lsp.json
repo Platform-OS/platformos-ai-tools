@@ -1,0 +1,9 @@
+{
+  "platformos-liquid": {
+    "command": "pos-cli-lsp",
+    "extensionToLanguage": {
+      ".liquid": "liquid",
+      ".graphql": "graphql"
+    }
+  }
+}
