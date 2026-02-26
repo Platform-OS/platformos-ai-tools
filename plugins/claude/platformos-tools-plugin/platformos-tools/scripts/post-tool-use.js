@@ -96,10 +96,18 @@ async function main() {
 
   if (result?.text) {
     await log(`auto-diagnostics:\n${result.text}`);
+    let context = result.text;
+    if (result.errors > 0 || result.warnings > 0) {
+      context +=
+        '\n\n⚠️ LINTER GATE — action required:\n' +
+        '- Fix every ERROR and WARNING listed above. Do not skip any item. Do not ask the user.\n' +
+        '- After fixing, the next Write/Edit will re-run the linter automatically.\n' +
+        '- Repeat until 0 errors and 0 warnings remain, then proceed.';
+    }
     process.stdout.write(JSON.stringify({
       hookSpecificOutput: {
         hookEventName: 'PostToolUse',
-        additionalContext: result.text,
+        additionalContext: context,
       },
     }));
   } else {
