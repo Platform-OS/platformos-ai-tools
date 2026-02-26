@@ -2,4 +2,5 @@
 .improve-output/
 .opencode/
 scripts/
+!plugins/claude/platformos-tools-plugin/platformos-tools/scripts/
 docs/
