@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
-# install.sh — opencode-platformos-lsp installer
 set -euo pipefail
 
-PLUGIN_NAME="platformos-lsp"
+PLUGIN_NAME="platformos-tools"
 PLUGIN_FILE="plugin.js"
+GITHUB_RAW="https://raw.githubusercontent.com/Platform-OS/platformos-ai-tools/master/plugins/opencode/platformos-tools-plugin/plugin.js"
 OPENCODE_DIR="${HOME}/.config/opencode"
 PLUGINS_DIR="${OPENCODE_DIR}/plugins"
 CONFIG_FILE="${OPENCODE_DIR}/opencode.json"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BOLD='\033[1m'; NC='\033[0m'
 
@@ -16,24 +15,29 @@ success() { echo -e "${GREEN}  ✓${NC} $*"; }
 warn()    { echo -e "${YELLOW}  ⚠${NC} $*"; }
 error()   { echo -e "${RED}  ✗${NC} $*" >&2; exit 1; }
 
-echo -e "\n${BOLD}opencode-platformos-lsp installer${NC}\n"
-
-# ── 1. Check prerequisites ─────────────────────────────────────────────────────
+echo -e "\n${BOLD}platformos-tools for OpenCode${NC}\n"
 
 info "Checking prerequisites..."
 
-if ! command -v pos-cli &>/dev/null; then
-  error "pos-cli not found. Install it first:\n\n      npm install -g @platformos/pos-cli\n"
-fi
-success "pos-cli found at $(command -v pos-cli)"
+MISSING=()
+command -v pos-cli     &>/dev/null || MISSING+=("pos-cli")
+command -v pos-cli-lsp &>/dev/null || MISSING+=("pos-cli-lsp")
+command -v pos-cli-mcp &>/dev/null || MISSING+=("pos-cli-mcp")
 
-if ! command -v pos-cli-mcp &>/dev/null; then
-  warn "pos-cli-mcp not found — MCP server entry will still be added to opencode.json, but install pos-cli-mcp before using it"
-else
-  success "pos-cli-mcp found at $(command -v pos-cli-mcp)"
+if [[ ${#MISSING[@]} -gt 0 ]]; then
+  echo -e "${RED}  ✗  Missing required binaries: ${MISSING[*]}${NC}" >&2
+  echo -e "" >&2
+  echo -e "  Install pos-cli (v6.0.0-beta.10 or later) which includes all three:" >&2
+  echo -e "" >&2
+  echo -e "      npm install -g @platformos/pos-cli@6.0.0-beta.10" >&2
+  echo -e "" >&2
+  exit 1
 fi
 
-# Determine JSON runtime: prefer bun (shipped with OpenCode), fall back to node
+success "pos-cli     found at $(command -v pos-cli)"
+success "pos-cli-lsp found at $(command -v pos-cli-lsp)"
+success "pos-cli-mcp found at $(command -v pos-cli-mcp)"
+
 if command -v bun &>/dev/null; then
   JSON_RUNTIME="bun"
 elif command -v node &>/dev/null; then
@@ -48,8 +52,6 @@ if [[ ! -d "${OPENCODE_DIR}" ]]; then
 fi
 success "OpenCode config dir: ${OPENCODE_DIR}"
 
-# ── 2. Install plugin file ─────────────────────────────────────────────────────
-
 info "Installing plugin..."
 
 mkdir -p "${PLUGINS_DIR}"
@@ -60,10 +62,20 @@ if [[ -f "${DEST}" ]]; then
   warn "Overwriting existing plugin at ${DEST}"
 fi
 
-cp "${SCRIPT_DIR}/${PLUGIN_FILE}" "${DEST}"
-success "Plugin copied to ${DEST}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-}")" 2>/dev/null && pwd || true)"
+LOCAL_FILE="${SCRIPT_DIR}/${PLUGIN_FILE}"
 
-# ── 3. Add pos-cli-mcp entry to opencode.json ─────────────────────────────────
+if [[ -f "${LOCAL_FILE}" ]]; then
+  cp "${LOCAL_FILE}" "${DEST}"
+  success "Plugin copied from local file to ${DEST}"
+else
+  if ! command -v curl &>/dev/null; then
+    error "curl not found. Install curl or run this script from the repository directory."
+  fi
+  info "Downloading plugin from GitHub..."
+  curl -fsSL "${GITHUB_RAW}" -o "${DEST}"
+  success "Plugin downloaded to ${DEST}"
+fi
 
 info "Updating ${CONFIG_FILE}..."
 
@@ -89,11 +101,6 @@ config.mcp ??= {};
 const desired = {
   type: "local",
   command: ["pos-cli-mcp"],
-  environment: {
-    MCP_MIN_DEBUG: "1",
-    DEBUG: "1",
-    PARTNER_PORTAL_URL: "https://portal.ps-01-platformos.com",
-  },
 };
 
 if (JSON.stringify(config.mcp["pos-cli"]) === JSON.stringify(desired)) {
@@ -122,17 +129,10 @@ else
   cat <<'JSON'
     "pos-cli": {
       "type": "local",
-      "command": ["pos-cli-mcp"],
-      "environment": {
-        "MCP_MIN_DEBUG": "1",
-        "DEBUG": "1",
-        "PARTNER_PORTAL_URL": "https://portal.ps-01-platformos.com"
-      }
+      "command": ["pos-cli-mcp"]
     }
 JSON
 fi
-
-# ── 4. Done ────────────────────────────────────────────────────────────────────
 
 echo ""
 echo -e "${GREEN}${BOLD}Installation complete.${NC}"

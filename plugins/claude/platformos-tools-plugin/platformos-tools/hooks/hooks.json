@@ -1,5 +1,5 @@
 {
-  "description": "platformOS LSP plugin — auto-diagnostics and session context",
+  "description": "platformOS tools — auto-diagnostics and session context",
   "hooks": {
     "PostToolUse": [
       {
