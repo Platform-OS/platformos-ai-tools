@@ -1,0 +1,19 @@
+{
+  "name": "opencode-platformos-lsp",
+  "version": "1.0.0",
+  "description": "OpenCode plugin that integrates the platformOS Language Server (pos-cli lsp) for Liquid and GraphQL agent sessions",
+  "type": "module",
+  "main": "plugin.js",
+  "license": "MIT",
+  "keywords": ["opencode", "opencode-plugin", "platformos", "liquid", "graphql", "lsp"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YOUR_USERNAME/opencode-platformos-lsp"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "peerDependencies": {
+    "@opencode-ai/plugin": ">=1.0.0"
+  }
+}
