@@ -21,7 +21,7 @@ claude plugin install platformos-tools@platformos-ai-tools
 
 **Auto-diagnostics** — after every Read, Write, or Edit on a `.liquid` or `.graphql` file, `pos-cli check` runs automatically and results are injected into the agent context. The agent is instructed to fix all errors before proceeding.
 
-**LSP tools (via MCP)** — a private MCP server wraps the platformOS LSP to provide:
+**Available tools**
 
 | Tool | Description |
 |------|-------------|
