@@ -104,6 +104,10 @@ command/platfrmos.md     # /platformos entrypoint
 
 ## Add platformOS documentation MCP
 
+To obtain CF-Access-Client-Id and CF-Access-Client-Secret tokens, please contact support@platformos.com. Once you have them, follow the instructions depending on the tool you use.
+
+### OpenCode
+
 Configure in `opencode.json`
 
 ```
@@ -123,7 +127,10 @@ Configure in `opencode.json`
 }
 ```
 
-### To obtain CF-Access-Client-Id and CF-Access-Client-Secret tokens, please contact support@platformos.com
+### ClaudeCode
+
+`claude mcp add --transport http pos-librarian https://librarian.platformos.dev --header "CF-Access-Client-Id: ***.access" --header "CF-Access-Client-Secret: ***"`
+```
 
 ### Decision Trees
 
